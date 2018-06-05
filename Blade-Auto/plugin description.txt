@@ -1,0 +1,23 @@
+A plugin created by Dr_EdwardPCB
+allow automation to be created easily
+feature
+1.AutoWorkbench-gui config recepie then when item flow in by hopper, will be able to collect using hopper from below
+2.BlockPlacer
+3.BlockDestroyer
+4.SplitterChest-gui config to nearbychest()
+5.toggler-a tool that helps you create automated item
+===========================================================================
+Autoworkbench logic;
+AutoWorkbench store location,recepie and current array location=id
+1.detect nearby hopperblocks InventoryMoveItemEvent getDestination getItem()
+2.if above matches one of the 9 matrix set, item will be filled removed from the hopper inventory
+3.item will be temporary store in an array distribute evenly
+	-read all itemstack in matrix
+	-for each type of item create an array
+	-add according to a array index comparing 0 and 1
+		-if 0=0 add to 0
+		-if 0>1 add to 1
+		-if 0=1 compare 1 and 2
+		-if 7=8 add to 0
+4.once all recepie in temp array fulfill 1 output all item amount in array -1
+5.create an item in hopper inventory below the bench or if there isn't pop to everywhere
