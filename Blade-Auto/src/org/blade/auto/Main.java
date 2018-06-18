@@ -21,9 +21,11 @@ public class Main extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new AutoBenchAccept(),this);
 		//custom item
 		ltable=new HashMap<String,Long>();
-		for(String key:cfmg.getTable().getConfigurationSection("Table").getKeys(false)) {
-			ltable.put(key, System.currentTimeMillis());
-			System.out.println(key);
+		if(cfmg.getTable().contains("Table")) {
+			for(String key:cfmg.getTable().getConfigurationSection("Table").getKeys(false)) {
+				ltable.put(key, System.currentTimeMillis());
+				System.out.println(key);
+			}
 		}
 		Wrench w=new Wrench();
 		w.customRecepie();
