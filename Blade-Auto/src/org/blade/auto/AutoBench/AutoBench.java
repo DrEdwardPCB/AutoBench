@@ -24,6 +24,7 @@ public class AutoBench implements Listener{
 				Block block=e.getClickedBlock();
 				if(plugin.getcfmg().getTable().get("Table."+block.getLocation().getBlockX()+","+block.getLocation().getBlockY()+","+block.getLocation().getBlockZ())==null) {
 					newTable(block);
+					plugin.ltable.put(block.getLocation().getBlockX()+","+block.getLocation().getBlockY()+","+block.getLocation().getBlockZ(),System.currentTimeMillis());
 				}
 				e.setCancelled(true);
 				AutoBenchMenu am=new AutoBenchMenu();
@@ -37,6 +38,12 @@ public class AutoBench implements Listener{
 	@EventHandler
 	public void onDestroy(BlockBreakEvent e) {
 		Location l=e.getBlock().getLocation();
+		if(!plugin.ltable.containsKey(l.getBlockX()+","+l.getBlockY()+","+l.getBlockZ())){
+			return;
+		}
+		if(System.currentTimeMillis()<plugin.ltable.get(l.getBlockX()+","+l.getBlockY()+","+l.getBlockZ())) {
+			e.setCancelled(true);
+		}
 		if(plugin.getcfmg().getTable().contains("Table."+l.getBlockX()+","+l.getBlockY()+","+l.getBlockZ())) {
 			AutoBenchMenu am=new AutoBenchMenu();
 			am.popoutstuff(l);

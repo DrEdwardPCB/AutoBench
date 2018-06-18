@@ -28,6 +28,9 @@ public class AutoBenchMenu implements Listener{
 	//public boolean allowaccess=true;
 	
 	public void generateAutoTable(int x,int y,int z,Player player) {
+		if(System.currentTimeMillis()<plugin.ltable.get(x+","+y+","+z)) {
+			return;
+		}
 		Inventory i=plugin.getServer().createInventory(null,27,"Auto Bench,"+x+","+y+","+z);
 		ItemStack confirm=new ItemStack(Material.EMERALD);
 		ItemMeta meta1=confirm.getItemMeta();

@@ -57,13 +57,13 @@ public class AutoBenchAccept implements Listener{
 						}
 						plugin.getcfmg().getTable().set("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+min_id+".count",plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+min_id+".count")+1);
 						plugin.getcfmg().saveTable();
+						plugin.ltable.put(locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ(), System.currentTimeMillis()+4000);
 						plugin.getServer().getScheduler().runTaskLater(plugin,
-								new Runnable() {
-							public void run() {
-								e.getDestination().remove(e.getItem());
-							}
-						}
-								, 2L);
+							new Runnable() {
+								public void run() {
+									e.getDestination().remove(e.getItem());
+								}
+							}, 2L);
 					}	
 					//check whether all item >1
 					boolean canCraft=true;
@@ -83,6 +83,13 @@ public class AutoBenchAccept implements Listener{
 								plugin.getcfmg().saveTable();
 							}
 									
+						}
+						Location below1=new Location(locs.getWorld(),locs.getBlockX(),locs.getBlockY()-1,locs.getBlockZ());
+						if(below1.getBlock().getType().equals(Material.HOPPER)) {
+							org.bukkit.block.Hopper hh=(org.bukkit.block.Hopper)below1.getBlock().getState();
+							hh.getInventory().addItem((ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
+							System.out.println("successfully create an item");
+							return;
 						}
 						locs.getWorld().dropItem(locs,(ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
 						System.out.println("successfully create an item");
