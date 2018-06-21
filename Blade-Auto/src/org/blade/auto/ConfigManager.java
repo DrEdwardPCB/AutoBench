@@ -35,7 +35,7 @@ public class ConfigManager {
 	public void saveTable() {
 		try {
 			autoTablecfg.save(autoTable);
-			Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.GREEN+"The autoTable.yml file has been save successfully");
+			//Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.GREEN+"The autoTable.yml file has been save successfully");
 		}catch(IOException e) {
 			Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED+"Could not save autoTable.yml file");
 		}

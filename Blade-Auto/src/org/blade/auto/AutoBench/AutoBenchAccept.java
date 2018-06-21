@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Hopper;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class AutoBenchAccept implements Listener{
 	private Main plugin=Main.getPlugin(Main.class);
@@ -25,28 +26,48 @@ public class AutoBenchAccept implements Listener{
 				return;
 			}
 			if(hop.getFacing().equals(BlockFace.DOWN)) {
-				Location loc=e.getDestination().getLocation();
-				Location locs=new Location(loc.getWorld(),loc.getX(),loc.getY()-1,loc.getZ());
-				//System.out.println(locs.getBlockX()+" "+locs.getBlockY()+" "+locs.getBlockZ());
-				//System.out.println(plugin.getcfmg().getTable().contains("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Location.x"));
-				if(plugin.getcfmg().getTable().contains("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Location.x")) {
-					//System.out.println("4");
-					//hashmap key=item name storing Arraylist of id from 0-8;
-					HashMap<ItemStack,ArrayList<Integer>> ih = new HashMap<ItemStack,ArrayList<Integer>>();
-					for(int i=0;i<9;i++) {
-						if(!plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item").equals("")) {
-							//System.out.println(i);
-							if(ih.containsKey(plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item"))) {
-								ih.get(plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item")).add(i);
-							}else {
-								ArrayList<Integer>ic = new ArrayList<Integer>();
-								ic.add(i);
-								ih.put((ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item"), ic);
-							}
-						}
+				InventoryTransferLoop(e);
+			}else {
+				return;
+			}
+		}else {
+			return;
+		}
+	}
+	public void InventoryTransferLoop(InventoryMoveItemEvent e) {
+		Location loc=e.getDestination().getLocation();
+		Location locs=new Location(loc.getWorld(),loc.getX(),loc.getY()-1,loc.getZ());
+		//System.out.println(locs.getBlockX()+" "+locs.getBlockY()+" "+locs.getBlockZ());
+		//System.out.println(plugin.getcfmg().getTable().contains("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Location.x"));
+		if(plugin.getcfmg().getTable().contains("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Location.x")) {
+			if(e.getInitiator().getLocation().equals(loc)) {
+				e.setCancelled(true);
+				return;
+			}
+			//System.out.println("4");
+			//hashmap key=item name storing Arraylist of id from 0-8;
+			HashMap<ItemStack,ArrayList<Integer>> ih = new HashMap<ItemStack,ArrayList<Integer>>();
+			for(int i=0;i<9;i++) {
+				if(!plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item").equals("")) {
+					//System.out.println(i);
+					if(ih.containsKey(plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item"))) {
+						ih.get(plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item")).add(i);
+					}else {
+						ArrayList<Integer>ic = new ArrayList<Integer>();
+						ic.add(i);
+						ih.put((ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item"), ic);
 					}
-					//putting the item inside the count accordingly
-					if(ih.containsKey(e.getItem())) {
+				}
+			}
+			//putting the item inside the count accordingly
+			if(System.currentTimeMillis()<plugin.ltable.get(locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ())) {
+				return;
+			}
+			if(ih.containsKey(e.getItem())) {
+				ItemStack is=e.getItem();
+				 new BukkitRunnable() {
+					public void run() {
+						if(e.getDestination().containsAtLeast(is, 1)) {
 						int min_number=100;
 						int min_id=-1;
 						for(int i:ih.get(e.getItem())) {
@@ -57,51 +78,54 @@ public class AutoBenchAccept implements Listener{
 						}
 						plugin.getcfmg().getTable().set("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+min_id+".count",plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+min_id+".count")+1);
 						plugin.getcfmg().saveTable();
-						plugin.ltable.put(locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ(), System.currentTimeMillis()+4000);
-						plugin.getServer().getScheduler().runTaskLater(plugin,
-							new Runnable() {
+						plugin.ltable.put(locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ(), System.currentTimeMillis()+1000);
+						
+							new BukkitRunnable() {
 								public void run() {
-									e.getDestination().remove(e.getItem());
-								}
-							}, 2L);
-					}	
-					//check whether all item >1
-					boolean canCraft=true;
-					for(ItemStack key:ih.keySet()) {
-						for(int i:ih.get(key)) {
-							if(plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count")==0) {
-								//System.out.println(i);
-								canCraft=false;
-							}
-						}
-					}
-					if(canCraft&&!plugin.getcfmg().getTable().getString("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item").equals("")) {
-
-						for(int i=0;i<9;i++) {
-							if(!plugin.getcfmg().getTable().getString("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item").equals("")) {
-								plugin.getcfmg().getTable().set("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count",plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count")-1);
-								plugin.getcfmg().saveTable();
-							}
 									
+										e.getDestination().removeItem(e.getItem());
+									
+								}
+							}.runTaskLater(plugin, 2L);
+						}else {
+							this.cancel();
 						}
-						Location below1=new Location(locs.getWorld(),locs.getBlockX(),locs.getBlockY()-1,locs.getBlockZ());
-						if(below1.getBlock().getType().equals(Material.HOPPER)) {
-							org.bukkit.block.Hopper hh=(org.bukkit.block.Hopper)below1.getBlock().getState();
-							hh.getInventory().addItem((ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
-							System.out.println("successfully create an item");
-							return;
+					
+			//check whether all item >1
+						boolean canCraft=true;
+						for(ItemStack key:ih.keySet()) {
+							for(int i:ih.get(key)) {
+								if(plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count")==0) {
+									//System.out.println(i);
+									canCraft=false;
+								}
+							}
 						}
-						locs.getWorld().dropItem(locs,(ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
-						System.out.println("successfully create an item");
-						//e.getDestination().remove(e.getItem());
-					}
-					//ih.clear();
-				}else {
-					return;
-				}
-			}else {
-				return;
-			}
+						if(canCraft&&!plugin.getcfmg().getTable().getString("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item").equals("")) {
+
+							for(int i=0;i<9;i++) {
+								if(!plugin.getcfmg().getTable().getString("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".item").equals("")) {
+									plugin.getcfmg().getTable().set("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count",plugin.getcfmg().getTable().getInt("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe."+i+".count")-1);
+									plugin.getcfmg().saveTable();
+								}
+								
+							}
+							Location below1=new Location(locs.getWorld(),locs.getBlockX(),locs.getBlockY()-1,locs.getBlockZ());
+							if(below1.getBlock().getType().equals(Material.HOPPER)) {
+								org.bukkit.block.Hopper hh=(org.bukkit.block.Hopper)below1.getBlock().getState();
+								hh.getInventory().addItem((ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
+								//System.out.println("successfully create an item");
+								return;
+							}
+							locs.getWorld().dropItem(locs,(ItemStack)plugin.getcfmg().getTable().get("Table."+locs.getBlockX()+","+locs.getBlockY()+","+locs.getBlockZ()+".Recipe.result.item"));
+							//System.out.println("successfully create an item");
+				//e.getDestination().remove(e.getItem());
+						}
+						}
+					}.runTaskTimer(plugin, 8L, 8L);
+					
+				}	
+			//ih.clear();
 		}else {
 			return;
 		}
